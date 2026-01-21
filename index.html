@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA CORPORATIVO - I&A CONTRERAS V4</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #1b5e20; --secondary: #2e7d32; --accent: #a5d6a7; --dark: #121212; --light: #f4f7f6; --danger: #c62828; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--light); color: #333; }
+
+        /* Estructura Lateral */
+        nav { width: 260px; background: var(--dark); color: white; position: fixed; height: 100vh; padding: 20px; z-index: 1000; display: flex; flex-direction: column; }
+        main { margin-left: 260px; padding: 30px; min-height: 100vh; }
+        
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 25px; border-top: 4px solid var(--primary); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        
+        /* Login */
+        #login-screen { position: fixed; inset: 0; background: linear-gradient(135deg, var(--dark), var(--primary)); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; padding: 40px; border-radius: 20px; width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        /* UI Elements */
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem; }
+        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; background: var(--primary); color: white; transition: 0.3s; }
+        button:hover { filter: brightness(1.2); transform: translateY(-1px); }
+        .nav-link { padding: 12px; margin: 5px 0; cursor: pointer; border-radius: 8px; display: flex; align-items: center; gap: 10px; color: #ccc; transition: 0.3s; }
+        .nav-link.active { background: var(--primary); color: white; }
+        
+        /* Tablas */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: var(--primary); }
+
+        /* Finanzas */
+        .box-result { padding: 15px; border-radius: 10px; text-align: center; margin-bottom: 10px; }
+        .box-inv { background: #fff3e0; border: 1px solid #ffcc80; }
+        .box-util { background: #e8f5e9; border: 1px solid #a5d6a7; }
+        .rep-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f9f9f9; border-radius: 8px; margin-bottom: 5px; border-left: 4px solid var(--primary); }
+        
+        .section { display: none; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .admin-only, .com-only { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-card">
+            <h2 style="color: var(--primary)">I&A CONTRERAS</h2>
+            <p style="font-size: 0.8rem; color: #666; margin-bottom: 20px;">SISTEMA DE GESTIÓN CORPORATIVA</p>
+            <input type="text" id="u-login" placeholder="Usuario">
+            <input type="password" id="p-login" placeholder="Contraseña">
+            <button onclick="login()" style="width: 100%;">ENTRAR AL SISTEMA</button>
+            <p id="err-msg" style="color: red; display: none; margin-top: 10px;">Credenciales inválidas</p>
+        </div>
+    </div>
+
+    <nav id="sidebar" style="display: none;">
+        <div style="text-align: center; border-bottom: 1px solid #444; padding-bottom: 20px; margin-bottom: 20px;">
+            <h3 style="color: var(--accent);">I&A CONTRERAS</h3>
+            <small id="user-display" style="color: #fff;"></small>
+        </div>
+        <div class="nav-link active" onclick="showSection('inicio', this)"><i class="fas fa-info-circle"></i> Inicio</div>
+        <div class="nav-link" onclick="showSection('operaciones', this)"><i class="fas fa-truck"></i> Movimientos</div>
+        <div class="nav-link" onclick="showSection('calculadora', this)"><i class="fas fa-flask"></i> Calculadora</div>
+        <div class="nav-link admin-only com-only" onclick="showSection('financiero', this)"><i class="fas fa-chart-pie"></i> Financiero</div>
+        <div class="nav-link admin-only" onclick="showSection('usuarios', this)"><i class="fas fa-users-cog"></i> Gestión Usuarios</div>
+        <button onclick="location.reload()" style="background: var(--danger); margin-top: auto;"><i class="fas fa-power-off"></i> Salir</button>
+    </nav>
+
+    <main id="app-content" style="display: none;">
+        
+        <section id="inicio" class="section" style="display: block;">
+            <div class="card">
+                <h1 style="color: var(--primary);"><i class="fas fa-industry"></i> ¿Qué es el Acidulado de Soya?</h1>
+                <p style="margin-top: 10px;">Es un subproducto esencial de la refinación del aceite crudo, obtenido mediante la acidulación del <i>soapstock</i>. Es vital para la industria de nutrición animal por su alta densidad energética.</p>
+                <div class="grid" style="margin-top: 20px;">
+                    <div class="card" style="border-top: 4px solid #2196f3;">
+                        <h4><i class="fas fa-flask"></i> Proceso Químico</h4>
+                        <p>Utilizamos Ácido Sulfúrico ($H_{2}SO_{4}$) al 7.68% para separar los ácidos grasos. Temperatura óptima: 80°C - 100°C.</p>
+                    </div>
+                    <div class="card" style="border-top: 4px solid #ff9800;">
+                        <h4><i class="fas fa-bullseye"></i> Usos Estratégicos</h4>
+                        <p>Principalmente utilizado en dietas para aves y cerdos, permitiendo una excelente absorción de nutrientes a bajo costo.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="operaciones" class="section">
+            <div class="card">
+                <h2><i class="fas fa-truck-loading"></i> Registro de Mula</h2>
+                <div class="grid">
+                    <div>
+                        <input type="text" id="op-placa" placeholder="Placa del Vehículo">
+                        <select id="op-tipo">
+                            <option value="INGRESO SOAPSTOCK">Ingreso Soapstock (Materia Prima)</option>
+                            <option value="SALIDA ACIDULADO">Salida Acidulado (Producto)</option>
+                        </select>
+                        <input type="number" id="op-peso" placeholder="Peso Neto KG">
+                    </div>
+                    <div>
+                        <label>Foto del Vehículo / Guía:</label>
+                        <input type="file" id="op-foto" accept="image/*" onchange="encodeImg(this)">
+                        <textarea id="op-obs" placeholder="Observaciones generales..."></textarea>
+                    </div>
+                </div>
+                <button onclick="guardarMovimiento()" style="width: 100%;"><i class="fas fa-save"></i> REGISTRAR Y DESCARGAR REPORTE WORD</button>
+            </div>
+            <div class="card">
+                <h3>Historial Logístico</h3>
+                <table id="table-ops">
+                    <thead><tr><th>Fecha</th><th>Placa</th><th>Tipo</th><th>Peso</th><th>Foto</th><th>Doc</th><th>Borrar</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="calculadora" class="section">
+            <div class="card" style="text-align: center;">
+                <h2>Calculadora Dual Técnica</h2>
+                <div class="grid" style="margin-top: 20px;">
+                    <div><label>Kilos Soapstock</label><input type="number" id="c-kg" oninput="calcDual('K')" placeholder="0"></div>
+                    <div><label>Galones Soapstock</label><input type="number" id="c-gl" oninput="calcDual('G')" placeholder="0"></div>
+                </div>
+                <div class="grid" style="margin-top: 20px;">
+                    <div class="box-result box-util"><h3>Ácido en Kilos</h3><h1 id="res-ak">0.00</h1></div>
+                    <div class="box-result box-inv"><h3>Ácido en Galones</h3><h1 id="res-ag">0.00</h1></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="financiero" class="section">
+            <div class="grid">
+                <div class="card">
+                    <h3><i class="fas fa-wallet"></i> 1. Inversión (Costos)</h3>
+                    <input type="text" id="f-placa" placeholder="Placa de la Mula">
+                    <label>Kilos Materia Prima</label><input type="number" id="f-kilos-materia" oninput="autoFin()" value="0">
+                    <label>Precio por Kilo Materia Prima ($)</label><input type="number" id="f-precio-materia" oninput="autoFin()" value="0">
+                    <label>Costo Químicos ($)</label><input type="number" id="f-quimico" oninput="autoFin()" value="0">
+                    <label>Costo Transporte ($)</label><input type="number" id="f-transp" oninput="autoFin()" value="0">
+                    <div class="box-result box-inv"><strong>INVERSIÓN TOTAL:</strong> <h2 id="f-total-inv">$ 0</h2></div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-hand-holding-usd"></i> 2. Venta y Utilidad</h3>
+                    <label>Kilos Vendidos</label><input type="number" id="f-kvend" oninput="autoFin()" value="0">
+                    <label>Precio por Kilo ($)</label><input type="number" id="f-precio" oninput="autoFin()" value="0">
+                    <div class="box-result box-util" style="margin-top: 45px;">
+                        <strong>UTILIDAD BRUTA:</strong> <h2 id="f-util-bruta">$ 0</h2>
+                    </div>
+                    <div class="box-result" style="background: #e3f2fd;">
+                        <strong>UTILIDAD NETA (Sin Operativos):</strong> <h2 id="f-util-neta">$ 0</h2>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-users"></i> 3. Repartición de Ganancias (Configurable)</h3>
+                <div class="grid">
+                    <div>
+                        <label>Administrador (%)</label><input type="number" id="p-adm" value="45" oninput="autoFin()">
+                        <label>Socio / Comercial (%)</label><input type="number" id="p-com" value="45" oninput="autoFin()">
+                        <label>Operadores (%)</label><input type="number" id="p-ope" value="10" oninput="autoFin()">
+                    </div>
+                    <div style="display: flex; flex-direction: column; justify-content: center;">
+                        <div class="rep-item"><span>Pago Administrador:</span><b id="v-adm">$ 0</b></div>
+                        <div class="rep-item"><span>Pago Comercial:</span><b id="v-com">$ 0</b></div>
+                        <div class="rep-item"><span>Pago Operadores:</span><b id="v-ope">$ 0</b></div>
+                        <button onclick="archivarLiquidacion()" style="margin-top: 10px; background: #1565c0;">GUARDAR LIQUIDACIÓN FINAL</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Resumen de Rentabilidad</h3>
+                <canvas id="chartFin" height="100"></canvas>
+                <table id="table-fin">
+                    <thead><tr><th>Mula</th><th>Inversión</th><th>Venta</th><th>Utilidad</th><th>Borrar</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="usuarios" class="section">
+            <div class="card">
+                <h2>Administración de Personal</h2>
+                <div class="grid">
+                    <input type="text" id="nu-nom" placeholder="Nombre completo">
+                    <input type="text" id="nu-usu" placeholder="Usuario">
+                    <input type="text" id="nu-pas" placeholder="Contraseña">
+                    <select id="nu-rol">
+                        <option value="operador">Operador</option>
+                        <option value="comercial">Comercial / Socio</option>
+                        <option value="admin">Administrador Total</option>
+                    </select>
+                </div>
+                <button onclick="nuevoUsuario()" style="width: 100%; margin-top: 10px;">CREAR NUEVO USUARIO</button>
+            </div>
+            <div class="card">
+                <h3>Usuarios en el Sistema</h3>
+                <table id="table-users">
+                    <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Acción</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // CONFIGURACIÓN INICIAL
+        let db = JSON.parse(localStorage.getItem('IAC_SYSTEM_DATA')) || {
+            users: [{nombre: "ADMINISTRADOR", user: "admin", pass: "1234", rol: "admin"}],
+            movimientos: [],
+            finanzas: []
+        };
+        let imgTemp = "";
+        let chartRef = null;
+
+        // LOGIN
+        function login() {
+            const u = document.getElementById('u-login').value;
+            const p = document.getElementById('p-login').value;
+            const user = db.users.find(x => x.user === u && x.pass === p);
+
+            if(user) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('sidebar').style.display = 'flex';
+                document.getElementById('app-content').style.display = 'block';
+                document.getElementById('user-display').innerText = `Rol: ${user.rol.toUpperCase()}`;
+                if(user.rol === 'admin' || user.rol === 'comercial') {
+                    document.querySelectorAll('.com-only').forEach(e => e.style.display = 'flex');
+                }
+                if(user.rol === 'admin') {
+                    document.querySelectorAll('.admin-only').forEach(e => e.style.display = 'flex');
+                }
+                renderAll();
+            } else {
+                document.getElementById('err-msg').style.display = 'block';
+            }
+        }
+
+        // CALCULADORA DUAL
+        function calcDual(mode) {
+            const kg = document.getElementById('c-kg');
+            const gl = document.getElementById('c-gl');
+            const d = 0.92; // Densidad Soapstock
+
+            if(mode === 'K') {
+                gl.value = (kg.value / 3.785 / d).toFixed(2);
+            } else {
+                kg.value = (gl.value * 3.785 * d).toFixed(2);
+            }
+
+            const resK = kg.value * 0.0768;
+            document.getElementById('res-ak').innerText = resK.toFixed(2);
+            document.getElementById('res-ag').innerText = (resK / 1.84 / 3.785).toFixed(2); // Densidad H2SO4
+        }
+
+        // MOVIMIENTOS Y WORD
+        function encodeImg(input) {
+            const reader = new FileReader();
+            reader.onload = (e) => imgTemp = e.target.result;
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function guardarMovimiento() {
+            const m = {
+                id: Date.now(),
+                fecha: new Date().toLocaleString(),
+                placa: document.getElementById('op-placa').value.toUpperCase(),
+                tipo: document.getElementById('op-tipo').value,
+                peso: document.getElementById('op-peso').value,
+                foto: imgTemp,
+                obs: document.getElementById('op-obs').value
+            };
+            if(!m.placa || !m.peso) return alert("Faltan datos");
+            db.movimientos.push(m);
+            save(); renderOps();
+            descargarWord(m);
+        }
+
+        function descargarWord(m) {
+            const content = `
+                REPORTE DE MOVIMIENTO - I&A CONTRERAS
+                -------------------------------------
+                FECHA: ${m.fecha}
+                PLACA: ${m.placa}
+                OPERACIÓN: ${m.tipo}
+                PESO NETO: ${m.peso} KG
+                OBSERVACIONES: ${m.obs}
+            `;
+            const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Movimiento_${m.placa}.doc`;
+            link.click();
+        }
+
+        // FINANZAS Y REPARTICIÓN
+        function autoFin() {
+            const kilosMat = parseFloat(document.getElementById('f-kilos-materia').value) || 0;
+            const precioMat = parseFloat(document.getElementById('f-precio-materia').value) || 0;
+            const mat = kilosMat * precioMat;
+            const qui = parseFloat(document.getElementById('f-quimico').value) || 0;
+            const tra = parseFloat(document.getElementById('f-transp').value) || 0;
+            const kv = parseFloat(document.getElementById('f-kvend').value) || 0;
+            const pre = parseFloat(document.getElementById('f-precio').value) || 0;
+
+            const invTotal = mat + qui + tra;
+            const ventaTotal = kv * pre; // Esto es la Utilidad Bruta
+            const utilidadNeta = ventaTotal - invTotal; // Esto es la Utilidad Neta
+
+            document.getElementById('f-total-inv').innerText = `$ ${invTotal.toLocaleString()}`;
+            document.getElementById('f-util-bruta').innerText = `$ ${ventaTotal.toLocaleString()}`;
+            document.getElementById('f-util-neta').innerText = `$ ${utilidadNeta.toLocaleString()}`;
+
+            // Repartición sobre la utilidad neta
+            const pAdm = (parseFloat(document.getElementById('p-adm').value) / 100) * utilidadNeta;
+            const pCom = (parseFloat(document.getElementById('p-com').value) / 100) * utilidadNeta;
+            const pOpe = (parseFloat(document.getElementById('p-ope').value) / 100) * utilidadNeta;
+
+            document.getElementById('v-adm').innerText = `$ ${pAdm.toLocaleString()}`;
+            document.getElementById('v-com').innerText = `$ ${pCom.toLocaleString()}`;
+            document.getElementById('v-ope').innerText = `$ ${pOpe.toLocaleString()}`;
+
+            return { invTotal: invTotal, ventaTotal: ventaTotal, utilidadBruta: utilidadNeta };
+        }
+
+        function archivarLiquidacion() {
+            const data = autoFin();
+            const placa = document.getElementById('f-placa').value;
+            if(!placa) return alert("Ingrese placa");
+
+            db.finanzas.push({
+                id: Date.now(),
+                placa: placa.toUpperCase(),
+                ...data
+            });
+            save(); renderFins(); initChart();
+            alert("Liquidación archivada");
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('chartFin').getContext('2d');
+            if(chartRef) chartRef.destroy();
+            chartRef = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: db.finanzas.slice(-5).map(x => x.placa),
+                    datasets: [
+                        { label: 'Inversión', data: db.finanzas.slice(-5).map(x => x.invTotal), backgroundColor: '#c62828' },
+                        { label: 'Venta', data: db.finanzas.slice(-5).map(x => x.ventaTotal), backgroundColor: '#2e7d32' }
+                    ]
+                }
+            });
+        }
+
+        // USUARIOS
+        function nuevoUsuario() {
+            const u = {
+                nombre: document.getElementById('nu-nom').value,
+                user: document.getElementById('nu-usu').value,
+                pass: document.getElementById('nu-pas').value,
+                rol: document.getElementById('nu-rol').value
+            };
+            if(!u.user || !u.pass) return;
+            db.users.push(u);
+            save(); renderUsers();
+        }
+
+        function eliminarUser(index) {
+            if(index === 0) return alert("No puedes eliminar al administrador maestro");
+            db.users.splice(index, 1);
+            save(); renderUsers();
+        }
+
+        // UTILIDADES
+        function save() { localStorage.setItem('IAC_SYSTEM_DATA', JSON.stringify(db)); }
+        function showSection(id, el) {
+            document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).style.display = 'block';
+            el.classList.add('active');
+            if(id === 'financiero') initChart();
+        }
+
+        function renderOps() {
+            const t = document.querySelector('#table-ops tbody');
+            t.innerHTML = db.movimientos.slice().reverse().map(m => `
+                <tr>
+                    <td>${m.fecha.split(',')[0]}</td>
+                    <td>${m.placa}</td>
+                    <td>${m.tipo}</td>
+                    <td>${m.peso}</td>
+                    <td><img src="${m.foto || ''}" style="width:40px; border-radius:4px;"></td>
+                    <td><button onclick='descargarWord(${JSON.stringify(m)})' style="padding:4px;"><i class="fas fa-file-word"></i></button></td>
+                    <td><button onclick="borrarOp(${m.id})" style="background:var(--danger); padding:4px;">X</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderFins() {
+            const t = document.querySelector('#table-fin tbody');
+            t.innerHTML = db.finanzas.slice().reverse().map(f => `
+                <tr>
+                    <td>${f.placa}</td>
+                    <td>$${f.invTotal.toLocaleString()}</td>
+                    <td>$${f.ventaTotal.toLocaleString()}</td>
+                    <td style="color:green; font-weight:bold">$${f.utilidadBruta.toLocaleString()}</td>
+                    <td><button onclick="borrarFin(${f.id})" style="background:var(--danger); padding:4px;">X</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderUsers() {
+            const t = document.querySelector('#table-users tbody');
+            t.innerHTML = db.users.map((u, i) => `
+                <tr>
+                    <td>${u.nombre}</td>
+                    <td>${u.user}</td>
+                    <td>${u.rol}</td>
+                    <td><button onclick="eliminarUser(${i})" style="background:var(--danger); padding:4px;">Eliminar</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function borrarOp(id) { db.movimientos = db.movimientos.filter(x => x.id !== id); save(); renderOps(); }
+        function borrarFin(id) { db.finanzas = db.finanzas.filter(x => x.id !== id); save(); renderFins(); initChart(); }
+        function renderAll() { renderOps(); renderFins(); renderUsers(); }
+
+    </script>
+</body>
+</html>
